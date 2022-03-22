@@ -1,2 +1,2 @@
-30 * * * * /bin/spotprice.sh >> /var/log/spotprice.log
+30 * * * * python3 /spotprice/fetch.py >> /var/log/spotprice.log
 
