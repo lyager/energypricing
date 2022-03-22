@@ -26,7 +26,7 @@ class Backend:
 
     def __del__(self):
         self.con.close()
-        self.logging.warning("Inserted: {} dupclicates: {}".format(self.inserted, self.duplicates))
+        self.logging.info("Inserted: {} dupclicates: {}".format(self.inserted, self.duplicates))
 
     def add_price(self, id, hourutc, hourdk, pricearea, spotpricedkk, spotpriceeur):
         """
