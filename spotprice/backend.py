@@ -5,6 +5,9 @@ import logging
 class Backend:
 
     def __init__(self, logging: logging):
+        self.inserted = 0
+        self.duplicates = 0
+        self.logging = logging
         db_name = "spotprice.sql"
         self.con = sqlite3.connect(db_name)
         self.cursor = self.con.cursor()
@@ -18,8 +21,12 @@ class Backend:
                                 SpotPriceEur)''')
             self.con.commit()
         except sqlite3.OperationalError:
-            logging.warning("Database {} already exists, will not create tables".format(db_name))
+            self.logging.warning("Database {} already exists, will not create tables".format(db_name))
             pass
+
+    def __del__(self):
+        self.con.close()
+        self.logging.warning("Inserted: {} dupclicates: {}".format(self.inserted, self.duplicates))
 
     def add_price(self, id, hourutc, hourdk, pricearea, spotpricedkk, spotpriceeur):
         """
@@ -30,5 +37,11 @@ class Backend:
             "SpotPriceDKK": 1654.68,
             "SpotPriceEUR": 222.38
         """
-        self.cursor.execute("INSERT INTO spotprice VALUES('{}', '{}', '{}', '{}', '{}', '{}')".format(id, hourutc, hourdk, pricearea, spotpricedkk, spotpriceeur))
-        self.con.commit()
+        try:
+            self.cursor.execute("INSERT INTO spotprice VALUES('{}', '{}', '{}', '{}', '{}', '{}')".format(id, hourutc, hourdk, pricearea, spotpricedkk, spotpriceeur))
+            self.con.commit()
+            self.inserted += 1
+        except sqlite3.IntegrityError:
+            # Unique id's are counted and ignored
+            self.duplicates += 1
+            pass
