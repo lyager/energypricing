@@ -1,17 +1,24 @@
 import sqlite3
+import logging
 
 
 class Backend:
 
-    def __init__(self):
-        self.con = sqlite3.connect('spotprice.sql')
+    def __init__(self, logging: logging):
+        db_name = "spotprice.sql"
+        self.con = sqlite3.connect(db_name)
         self.cursor = self.con.cursor()
         try:
             self.cursor.execute('''CREATE TABLE spotprice
-                                (id, HourUTC, HourDK, PriceArea,
-                                 SpotPriceDKK, SpotPriceEur)''')
+                                (id INTEGER NOT NULL PRIMARY KEY,
+                                HourUTC,
+                                HourDK,
+                                PriceArea,
+                                SpotPriceDKK,
+                                SpotPriceEur)''')
             self.con.commit()
         except sqlite3.OperationalError:
+            logging.warning("Database {} already exists, will not create tables".format(db_name))
             pass
 
     def add_price(self, id, hourutc, hourdk, pricearea, spotpricedkk, spotpriceeur):

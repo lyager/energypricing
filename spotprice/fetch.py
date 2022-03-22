@@ -1,4 +1,5 @@
 import requests
+import logging
 from backend import Backend
 
 
@@ -22,5 +23,5 @@ def to_backend(json, backend: Backend):
 
 if __name__ == "__main__":
     j = get_json()
-    b = Backend()
+    b = Backend(logging)
     to_backend(j, b)
