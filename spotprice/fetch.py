@@ -1,7 +1,8 @@
 import requests
+from backend import Backend
 
 
-def main():
+def get_json():
     payload = {
         'resource_id': 'elspotprices',
         'sort': 'HourDK desc'
@@ -10,8 +11,16 @@ def main():
                      params=payload)
     r.raise_for_status()
     j = r.json()
-    print(j)
+    assert j['success']
+    return j
+
+
+def to_backend(json, backend: Backend):
+    for i in json['result']['records']:
+        backend.add_price(i['_id'], i['HourUTC'], i['HourDK'], i['PriceArea'], i['SpotPriceDKK'], i['SpotPriceEUR'])
 
 
 if __name__ == "__main__":
-    main()
+    j = get_json()
+    b = Backend()
+    to_backend(j, b)
