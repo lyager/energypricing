@@ -1,2 +1,2 @@
-30 * * * * /bin/spotprice.sh
+30 * * * * /bin/spotprice.sh >> /var/log/spotprice.log
 
