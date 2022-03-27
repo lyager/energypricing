@@ -1,16 +1,16 @@
 import sqlite3
+import configparser
 import logging
 from flask import Flask
 
 
 class Backend:
 
-    def __init__(self, logging: logging = logging.getLogger(__name__)):
+    def __init__(self, db_location: str = "spotprice.sql", logging: logging = logging.getLogger(__name__)):
         self.inserted = 0
         self.duplicates = 0
         self.logging = logging
-        db_name = "spotprice.sql"
-        self.con = sqlite3.connect(db_name)
+        self.con = sqlite3.connect(db_location)
         self.cursor = self.con.cursor()
         try:
             self.cursor.execute('''CREATE TABLE spotprice
@@ -22,11 +22,12 @@ class Backend:
                                 SpotPriceEur)''')
             self.con.commit()
         except sqlite3.OperationalError:
-            self.logging.info("Database {} already exists, will not create tables".format(db_name))
+            self.logging.info("Database {} already exists, will not create tables".format(db_location))
             pass
 
     def __del__(self):
-        self.con.close()
+        if self.con:
+            self.con.close()
         self.logging.info("Inserted: {} dupclicates: {}".format(self.inserted, self.duplicates))
 
     def add_price(self, id, hourutc, hourdk, pricearea, spotpricedkk, spotpriceeur):
@@ -53,14 +54,25 @@ class Backend:
         return rows
 
 
-app = Flask(__name__)
+def main():
+
+    config_file = "config.ini"
+    config = configparser.ConfigParser()
+    config.read(config_file)
 
 
-@app.route("/getcsv/")
-def getcsv():
-    b = Backend()
-    ret = ""
-    for my_list in b.get_last24hours():
-        ret += ','.join(map(str, my_list))
-        ret += '\n'
-    return ret
+    app = Flask(__name__)
+
+    # Set up Flask routes
+    @app.route("/getcsv/")
+    def getcsv():
+        backend = Backend(db_location=config['backend']['db_location'])
+        ret = ""
+        for my_list in backend.get_last24hours():
+            ret += ','.join(map(str, my_list))
+            ret += '\n'
+        return ret
+
+    app.run()
+if __name__ == "__main__":
+    main()
