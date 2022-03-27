@@ -1,10 +1,11 @@
 import sqlite3
 import logging
+from flask import Flask
 
 
 class Backend:
 
-    def __init__(self, logging: logging):
+    def __init__(self, logging: logging = logging.getLogger(__name__)):
         self.inserted = 0
         self.duplicates = 0
         self.logging = logging
@@ -21,7 +22,7 @@ class Backend:
                                 SpotPriceEur)''')
             self.con.commit()
         except sqlite3.OperationalError:
-            self.logging.warning("Database {} already exists, will not create tables".format(db_name))
+            self.logging.info("Database {} already exists, will not create tables".format(db_name))
             pass
 
     def __del__(self):
@@ -45,3 +46,21 @@ class Backend:
             # Unique id's are counted and ignored
             self.duplicates += 1
             pass
+
+    def get_last24hours(self):
+        self.cursor.execute("SELECT * FROM spotprice WHERE PriceArea='DK2' order by id DESC limit 24")
+        rows = self.cursor.fetchall()
+        return rows
+
+
+app = Flask(__name__)
+
+
+@app.route("/getcsv/")
+def getcsv():
+    b = Backend()
+    ret = ""
+    for my_list in b.get_last24hours():
+        ret += ','.join(map(str, my_list))
+        ret += '\n'
+    return ret
